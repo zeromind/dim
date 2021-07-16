@@ -1,10 +1,12 @@
 import logging
 import re
+from dimclient import DimClient
 import dns.zone
 import dns.name
 import dns.rdatatype
 import dns.tokenizer
 import dimcli
+from typing import Optional, Any
 
 RECORD = 25
 
@@ -61,7 +63,7 @@ def rdata_to_text(name, ttl, rdata):
     return ' '.join(str(x) for x in fields)
 
 
-def create_imported_view(server, zone_name, default_ttl, soa_rdata, view):
+def create_imported_view(server: DimClient, zone_name, default_ttl, soa_rdata, view):
     soa_attributes=dict(
         primary=str(soa_rdata.mname),
         ttl=default_ttl,
@@ -156,13 +158,13 @@ def toposort_records(records):
     return [records[node] for node in sorted_nodes]
 
 
-def import_zone(server, content, zone_name=None, view=None, revzone=False):
+def import_zone(server: DimClient, content: str, zone_name: str, view: Optional[str] = None, revzone: bool = False):
     parsed_zone = dns.zone.from_text(str(content), origin=zone_name, relativize=False, check_origin=False)
     soa_name, default_ttl, soa_rdata = get_first_soa(parsed_zone)
     if soa_rdata is None:
         raise Exception('Missing SOA')
     if revzone:
-        extra_args = dict(profile=False, create_linked=False)
+        extra_args = dict(profile=False, create_linked=False) # type: dict[str, Any]
         logging.log(RECORD, rdata_to_text(soa_name, default_ttl, soa_rdata))
         logging.info('Nothing to do')
     else:

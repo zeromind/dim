@@ -2,11 +2,11 @@ from .zoneimport import target_from_fields, toposort
 from dimcli import _print_messages
 
 
-def is_reverse_zone(zone):
+def is_reverse_zone(zone: str) -> bool:
     return zone.endswith('in-addr.arpa') or zone.endswith('ip6.arpa')
 
 
-def absolute_name(name, zone):
+def absolute_name(name: str, zone: str) -> str:
     if name.endswith('.'):
         return name
     if zone != '.':
@@ -18,7 +18,7 @@ def absolute_name(name, zone):
     return name + '.' + zone
 
 
-def toposort_records(records, zone):
+def toposort_records(records, zone: str):
     '''
     :type records: list of RR objects
     '''

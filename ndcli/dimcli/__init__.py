@@ -8,6 +8,7 @@ import sys
 import textwrap
 from datetime import datetime
 from functools import wraps
+from typing import Optional, Any
 
 from operator import itemgetter
 
@@ -19,7 +20,7 @@ __version__ = version.VERSION
 
 logger = logging.getLogger('ndcli')
 
-def _readconfig(config_file):
+def _readconfig(config_file: str) -> dict:
     config = {}
     config['server'] = "https://localhost/dim"
     config['username'] = getpass.getuser()
@@ -43,7 +44,7 @@ def dim_client(args):
     return DimClient(server_url, cookie_file=os.path.expanduser('~/.ndcli.cookie'), cookie_umask=0o077)
 
 
-def email2fqdn(string):
+def email2fqdn(string: str) -> str:
     try:
         name, host = string.split('@')
         return '%s.%s.' % (name.replace('.', '\\.'), host)
@@ -51,7 +52,7 @@ def email2fqdn(string):
         raise Exception('Invalid email address: %s' % string)
 
 
-def is_reverse_zone(zone):
+def is_reverse_zone(zone: str) -> bool:
     return zone.endswith('in-addr.arpa') or zone.endswith('ip6.arpa')
 
 
@@ -464,13 +465,13 @@ the start of the view list).'''},
     'caa': {'arguments': [Argument('caa_flags'),
                           Argument('property_tag'),
                           Argument('property_value')]},
-    }
+    } # type: dict[str, dict[str, Any]]
 RR_FIELDS['aaaa'] = RR_FIELDS['a']
 rr_types = list(RR_FIELDS.keys()) + ['soa']
 rr_type_arg = Group(Argument('type', choices=rr_types+[t.upper() for t in rr_types]), nargs='?')
 
 
-def _fill_rr_options(options, rr_type, params, args):
+def _fill_rr_options(options, rr_type: str, params, args):
     if rr_type == 'PTR' and re.match('^(((\d+\.){3}\d+)|(.*:.*))$', args.name):
         options['ip'] = args.name
     else:
@@ -488,7 +489,7 @@ def _fill_rr_options(options, rr_type, params, args):
     return options
 
 
-def _rr_options(rr_type, params, profile, args, zonearg):
+def _rr_options(rr_type: str, params, profile: str, args, zonearg):
     options = OptionDict()
     options.set_if(type=rr_type,
                    profile=profile,
@@ -500,7 +501,7 @@ def _rr_options(rr_type, params, profile, args, zonearg):
     return _fill_rr_options(options, rr_type, params, args)
 
 
-def _make_create_rr(rr_type, params, profile, zonearg, create_linked=None):
+def _make_create_rr(rr_type: str, params, profile: bool, zonearg, create_linked=None):
     def create_simple_rr(self, args):
         options = _rr_options(rr_type, params, profile, args, zonearg)
         if rr_type in ('A', 'AAAA', 'PTR'):
@@ -523,7 +524,7 @@ def _make_create_rr(rr_type, params, profile, zonearg, create_linked=None):
     return create_simple_rr
 
 
-def _make_delete_rr(rr_type, params, profile, zonearg, ignore_references=False):
+def _make_delete_rr(rr_type: Optional[str], params, profile: bool, zonearg, ignore_references: bool = False):
     def delete_rr(self, args):
         options = _rr_options(rr_type, params, profile, args, zonearg)
         options.set_if(free_ips=not args.get('keep-ip-reservation', True))
@@ -544,7 +545,7 @@ def _make_delete_rr(rr_type, params, profile, zonearg, ignore_references=False):
     return delete_rr
 
 
-def _delete_rr(self, args, zonearg, ignore_references=False):
+def _delete_rr(self, args, zonearg, ignore_references: bool = False):
     '''
     If autocomplete was used, the rr value is in args['value'],
     else the first argument is in args['value'] and the rest in args['values'].
@@ -558,7 +559,7 @@ def _delete_rr(self, args, zonearg, ignore_references=False):
     since " cannot show up in a TXT/SPF value unescaped.
     '''
     rr_type = None
-    params = ()
+    params = []
     if args['type'] is not None:
         params = [a.name for a in RR_FIELDS[args['type'].lower()]['arguments']]
         rr_type = args['type'].upper()
@@ -585,7 +586,7 @@ def _delete_rr(self, args, zonearg, ignore_references=False):
                     ignore_references=ignore_references)(self, args)
 
 
-def _make_show_rr(rr_type, params):
+def _make_show_rr(rr_type: str, params):
     def show_rr(self, args):
         options = OptionDict()
         options.set_if(type=rr_type,
@@ -596,7 +597,7 @@ def _make_show_rr(rr_type, params):
     return show_rr
 
 
-def _make_modify_rr(rr_type, params):
+def _make_modify_rr(rr_type: str, params):
     def modify_rr(self, args):
         options = OptionDict()
         options.set_if(type=rr_type,
@@ -1700,13 +1701,13 @@ delegation).''')
     def modify_group_remove_department(self, args):
         self.client.group_set_department_number(args.group, None)
 
-    def _make_grant_access(right, obj=None):
+    def _make_grant_access(right: str, obj=None):
         def f(self, args):
             extra_args = obj(args) if obj else ()
             self.client.group_grant_access(args.group, right, *extra_args)
         return f
 
-    def _make_revoke_access(right, obj=None):
+    def _make_revoke_access(right: str, obj=None):
         def f(self, args):
             extra_args = obj(args) if obj else ()
             self.client.group_revoke_access(args.group, right, *extra_args)
@@ -1732,7 +1733,7 @@ delegation).''')
         'delete_rr':
             dict(desc='delete rr',
                  arguments=(zone_arg, zoneview_group),
-                 extra=lambda args: [(args.zonename, args.view)])}
+                 extra=lambda args: [(args.zonename, args.view)])} # type: dict[str, dict[str, Any]]
     for right, prop in RIGHTS.items():
         obj = prop.get('extra', None)
         args = prop.get('arguments', [])
@@ -2269,7 +2270,7 @@ delegation).''')
         else:
             options = delete_rr_options
 
-        def make_delete_rr(rr, zone_arg=None, **kwargs):
+        def make_delete_rr(rr: str, zone_arg=None, **kwargs):
             def add_type(self, args):
                 args['type'] = rr
                 return _delete_rr(self, args, zone_arg, **kwargs)
@@ -2702,7 +2703,7 @@ delegation).''')
                                           ('last_run', )),
                      script=args.script)
 
-    def register_create_output(type, cmdline_options):
+    def register_create_output(type: str, cmdline_options: list):
         def create_output(self, args):
             options = OptionDict()
             options.set_if(comment=args.comment)
@@ -2790,7 +2791,7 @@ delegation).''')
         self.client.output_delete(args.output)
 
 
-def register_history(htype, cmd_args, arg_meta, f, fargs):
+def register_history(htype: str, cmd_args: tuple, arg_meta: str, f: str, fargs):
     def _get_history(self, args):
         func = getattr(self.client, f)
         fargs_l = fargs(args)
