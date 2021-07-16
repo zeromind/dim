@@ -8,7 +8,7 @@ Usage example::
 
 try:
     import simplejson as json
-except:
+except ImportError:
     import json
 from http.cookiejar import LWPCookieJar
 from urllib.parse import urlencode
@@ -20,6 +20,7 @@ import time
 import os
 import os.path
 from pprint import pformat
+from typing import Optional
 from . import version
 
 __version__ = version.VERSION
@@ -48,14 +49,14 @@ class ProtocolError(DimError):
 
 
 class DimClient(object):
-    def __init__(self, server_url, cookie_file=None, cookie_umask=None):
+    def __init__(self, server_url: str, cookie_file: Optional[str] = None, cookie_umask: Optional[int] = None):
         self.server_url = server_url
         self.cookie_jar = LWPCookieJar()
         self.session = build_opener(HTTPCookieProcessor(self.cookie_jar))
         if cookie_file:
             self._use_cookie_file(cookie_file, cookie_umask)
 
-    def login(self, username, password, permanent_session=False):
+    def login(self, username: str, password: str, permanent_session: bool = False) -> bool:
         try:
             self.session.open(self.server_url + '/login',
                               urlencode(dict(username=username,
@@ -75,7 +76,7 @@ class DimClient(object):
             return False
 
     @property
-    def logged_in(self):
+    def logged_in(self) -> bool:
         try:
             self.session.open(self.server_url + '/index.html')
             return True
@@ -85,7 +86,7 @@ class DimClient(object):
             else:
                 raise
 
-    def _use_cookie_file(self, cookie_file, cookie_umask, save_cookie=True):
+    def _use_cookie_file(self, cookie_file: str, cookie_umask: Optional[int] = None, save_cookie: bool = True):
         self.cookie_jar.filename = cookie_file
         self.save_cookie = save_cookie
         self.cookie_umask = cookie_umask
@@ -94,7 +95,7 @@ class DimClient(object):
         except:
             pass
 
-    def login_prompt(self, username=None, password=None, permanent_session=False, ignore_cookie=False):
+    def login_prompt(self, username: Optional[str] = None, password: Optional[str] = None, permanent_session: bool = False, ignore_cookie: bool = False) -> bool:
         if not ignore_cookie and self.logged_in:
             return True
         else:
@@ -114,7 +115,7 @@ class DimClient(object):
             raise ProtocolError("Server protocol version (%s) does not match client protocol version (%s)" %
                                 (server_protocol, PROTOCOL_VERSION))
 
-    def raw_call(self, function, *args):
+    def raw_call(self, function: str, *args):
         url = self.server_url + "/jsonrpc"
         json_call = json.dumps(dict(jsonrpc='2.0',
                                     method=function,
@@ -135,7 +136,7 @@ class DimClient(object):
                 logger.debug('dim result: ' + pformat(rpc_response['result']))
             return rpc_response['result']
 
-    def call(self, function, *args, **kwargs):
+    def call(self, function: str, *args, **kwargs):
         '''
         Instead of passing the last argument as a dictionary (usually called
         "options"), you can use keyword arguments.
@@ -149,7 +150,7 @@ class DimClient(object):
             passed_args += (kwargs,)
         return self.raw_call(function, *passed_args)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         return lambda *args, **kwargs: self.call(name, *args, **kwargs)
 
     def ip_list_all(self, **options):
@@ -165,7 +166,7 @@ class DimClient(object):
         return result
 
 
-def script_client(server_url, username=None, password=None):
+def script_client(server_url: str, username: Optional[str] = None, password: Optional[str] = None) -> DimClient:
     '''
     Return a client object authenticated with a permanent session and configured
     to use ~/.ndcli.cookie.
