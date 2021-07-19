@@ -164,7 +164,7 @@ def import_zone(server: DimClient, content: str, zone_name: str, view: Optional[
     if soa_rdata is None:
         raise Exception('Missing SOA')
     if revzone:
-        extra_args = dict(profile=False, create_linked=False) # type: dict[str, Any]
+        extra_args: dict[str, Any] = dict(profile=False, create_linked=False)
         logging.log(RECORD, rdata_to_text(soa_name, default_ttl, soa_rdata))
         logging.info('Nothing to do')
     else:

@@ -395,7 +395,7 @@ cmd = Command('ndcli',
               Command('dump'))
 
 
-RR_FIELDS = {
+RR_FIELDS: dict[str, dict[str, Any]] = {
     'a':   {'arguments': [Argument('ip')],
             'create_rr_description': '''Creates an A or AAAA resource record and the corresponding reverse record.
 
@@ -465,7 +465,7 @@ the start of the view list).'''},
     'caa': {'arguments': [Argument('caa_flags'),
                           Argument('property_tag'),
                           Argument('property_value')]},
-    } # type: dict[str, dict[str, Any]]
+    }
 RR_FIELDS['aaaa'] = RR_FIELDS['a']
 rr_types = list(RR_FIELDS.keys()) + ['soa']
 rr_type_arg = Group(Argument('type', choices=rr_types+[t.upper() for t in rr_types]), nargs='?')
