@@ -8,6 +8,7 @@ import sys
 import textwrap
 from datetime import datetime
 from functools import wraps
+from typing import Optional
 
 from operator import itemgetter
 
@@ -50,6 +51,20 @@ def get_layer3domain(from_args):
         return config['layer3domain']
     return None
 
+def login_prompt(client: DimClient, username: Optional[str] = None, password: Optional[str] = None, permanent_session: bool = False, ignore_cookie: bool = False):
+    '''
+    Check whether we're loggin in already.
+    If we're not: prompt for username and password if they've not been provided.
+    '''
+    if not ignore_cookie and client.logged_in:
+        return True
+    else:
+        if username is None:
+            username = input('Username: ')
+        if password is None:
+            password = getpass.getpass()
+        return client.login(username, password, permanent_session)
+
 def dim_client(args):
     server_url = args.server or os.getenv('NDCLI_SERVER', config['server'])
     username = args.username or os.getenv('NDCLI_USERNAME', config['username'])
@@ -58,7 +73,7 @@ def dim_client(args):
     logger.debug("Username: %s" % username)
     client = DimClient(server_url, cookie_file=cookie_path, cookie_umask=0o077)
     if not client.logged_in:
-        if not client.login_prompt(username=username, password=args.password, ignore_cookie=True):
+        if not login_prompt(client, username=username, password=args.password, ignore_cookie=True):
             raise Exception('Could not log in')
     return client
 
@@ -1578,7 +1593,7 @@ class CLI(object):
                   help='list of vlans')
     def list_vlans(self, args):
         '''
-        Displays the list of vlans used by pools.
+        Displays the list of vlans used by pools.s
         '''
         options = OptionDict(pool='*', include_subnets=False)
         pools = self.client.ippool_list(**options)
