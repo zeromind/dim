@@ -31,10 +31,12 @@ test:
 	-mkdir ${ODIR}
 	-mkdir ${LDIR}
 	${VDIR}/bin/manage_db clear
+	-rm ${VDIR}/.ndcli.cookie.*
 
 	PATH="${VDIR}/bin:${PATH}" \
 		TEST_OUTPUT_DIR="${ODIR}" \
 		SRVLOG="${SRVLOG}" \
+		HOME="${VDIR}" \
 		NDCLI_USERNAME="${NDCLI_USERNAME}" \
 		NDCLI_CONFIG="${NDCLI_CONFIG}" \
 		NDCLI_SERVER="${NDCLI_SERVER}" \

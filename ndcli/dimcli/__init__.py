@@ -56,8 +56,8 @@ def dim_client(args):
     cookie_path = os.path.expanduser(os.getenv('NDCLI_COOKIEPATH', f'~/.ndcli.cookie.{username}'))
     logger.debug("Dim server URL: %s" % server_url)
     logger.debug("Username: %s" % username)
-    client = DimClient(server_url, cookie_file=cookie_path, cookie_umask=0o077)
-    if not client.logged_in:
+    client = DimClient(server_url, username=username, cookie_file=cookie_path, cookie_umask=0o077)
+    if not client.verify_logged_in_username:
         if not client.login_prompt(username=username, password=args.password, ignore_cookie=True):
             raise Exception('Could not log in')
     return client

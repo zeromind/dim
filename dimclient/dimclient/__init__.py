@@ -3,7 +3,7 @@ try:
 except:
     import json
 from http.cookiejar import LWPCookieJar
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from urllib.error import HTTPError
 from urllib.request import urlopen, Request, build_opener, HTTPCookieProcessor
 import logging
@@ -12,6 +12,7 @@ import time
 import os
 import os.path
 from pprint import pformat
+from typing import Optional
 from . import version
 
 __version__ = version.VERSION
@@ -36,21 +37,25 @@ class ProtocolError(DimError):
 
 
 class DimClient(object):
-    def __init__(self, server_url, cookie_file=None, cookie_umask=None):
+    def __init__(self, server_url: str, username: str, cookie_file: Optional[str] = None, cookie_umask: Optional[int] = None):
         self.server_url = server_url
+        self.username = username
         self.cookie_jar = LWPCookieJar()
         self.session = build_opener(HTTPCookieProcessor(self.cookie_jar))
         if cookie_file:
             self._use_cookie_file(cookie_file, cookie_umask)
 
     def login(self, username, password, permanent_session=False):
+        '''Clear session cookies and log in'''
         try:
+            self.purge_cookies()
             self.session.open(self.server_url + '/login',
                               urlencode(dict(username=username,
                                              password=password,
                                              permanent_session=permanent_session)).encode('utf8'))
             self.check_protocol_version()
             self._update_cookie_file()
+            self.username = username
             return True
         except HTTPError as e:
             logger.error("Login failed: " + str(e))
@@ -68,6 +73,32 @@ class DimClient(object):
                 return False
             else:
                 raise
+
+    @property
+    def verify_logged_in_username(self):
+        '''Verify whether the user is logged in and username matches the one from the DIM session'''
+        if self.logged_in:
+            dim_username = self.get_username()
+            if self.username == dim_username:
+                logger.debug('Username {} matches user {} from the DIM session'.format(self.username, dim_username))
+                return True
+            else:
+                logger.warn('Username {} does not match user {} from the DIM session'.format(self.username, dim_username))
+                return False
+        else:
+            return False
+
+    def purge_cookies(self):
+        '''Clear session cookies'''
+        parsed = urlparse(self.server_url)
+        dim_domain = parsed.hostname
+        dim_path = parsed.path or '/'
+        try:
+            self.cookie_jar.clear(domain=dim_domain, path=dim_path, name='session')
+            logger.debug('Cleared session cookies for {}'.format(self.server_url))
+        except KeyError:
+            logger.debug('No session cookies to clear for {}'.format(self.server_url))
+            pass
 
     def _update_cookie_file(self):
         if self.cookie_jar.filename and self.save_cookie:
@@ -89,7 +120,7 @@ class DimClient(object):
             pass
 
     def login_prompt(self, username=None, password=None, permanent_session=False, ignore_cookie=False):
-        if not ignore_cookie and self.logged_in:
+        if not ignore_cookie and self.verify_logged_in_username:
             return True
         else:
             if username is None:
