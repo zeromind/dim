@@ -40,7 +40,7 @@ jobs:
           name: dim-web-src-${{ steps.version.outputs.version }}.tar.gz
           path: dim-web-src-${{ steps.version.outputs.version }}.tar.gz
 
-  centos7:
+  el7:
     runs-on: ubuntu-latest
     needs: build
     container:
@@ -103,11 +103,11 @@ jobs:
           name: python36-dim-web-${{ needs.build.outputs.version }}-1.el7.x86_64.rpm
           path: ~/rpmbuild/RPMS/x86_64/python36-dim-web-${{ needs.build.outputs.version }}-1.el7.x86_64.rpm
 
-  centos8:
+  el8:
     runs-on: ubuntu-latest
     needs: build
     container:
-      image: centos:centos8
+      image: oraclelinux:8
       env:
         _VERSION: ${{ needs.build.outputs.version }}
     steps:
@@ -198,8 +198,8 @@ jobs:
     needs:
       - build
       - debian
-      - centos7
-      - centos8
+      - el7
+      - el8
     steps:
       - uses: actions/checkout@v2
       - uses: actions/create-release@v1
