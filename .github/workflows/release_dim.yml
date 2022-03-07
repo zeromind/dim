@@ -46,6 +46,7 @@ jobs:
       env:
         _VERSION: ${{ needs.build.outputs.version }}
     steps:
+      - run: /bin/dnf install --assumeyes openldap-devel gcc python39-devel mariadb-devel git python39 rpm-build tar gzip
       - uses: actions/download-artifact@v2
         with:
           name: dim-src-${{ needs.build.outputs.version }}.tar.gz
@@ -53,8 +54,7 @@ jobs:
       - run: tar -xzf dim-src-${{ needs.build.outputs.version }}.tar.gz
         working-directory: /tmp
       - uses: actions/checkout@v2
-      - run: /bin/dnf install --assumeyes openldap-devel gcc python3-devel mariadb-devel git python3 rpm-build tar gzip
-      - run: /bin/python3 -m venv /opt/dim/
+      - run: /bin/python3.9 -m venv /opt/dim/
       - run: /opt/dim/bin/pip3 install -r dim/requirements.txt
       - run: /opt/dim/bin/pip3 install ./dim
       - run: mkdir /opt/dim/doc/
