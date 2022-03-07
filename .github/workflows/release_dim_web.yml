@@ -13,7 +13,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     container:
-      image: debian:10
+      image: debian:11
       env:
         _VERSION: ${{ needs.build.outputs.version }}
 
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     container:
-      image: debian:10
+      image: debian:11
       env:
         _VERSION: ${{ needs.build.outputs.version }}
     steps:
