@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - run: apt-get update
-      - run: apt-get install --yes python3-sphinx
+      - run: apt-get install --yes python3-sphinx python3-dns
       - run: 'echo "version=${_REF#*-}" >> $GITHUB_OUTPUT'
         id: version
         shell: bash
