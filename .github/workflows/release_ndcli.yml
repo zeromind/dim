@@ -11,15 +11,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:latest
+      image: oraclelinux:8
     outputs:
       version: ${{ steps.version.outputs.version }}
-    env:
-      DEBIAN_FRONTEND: noninteractive
 
     steps:
-      - run: apt-get update
-      - run: apt-get install --yes python3-sphinx python3-dns
+      - name: Install dependencies
+        run: /bin/dnf install --assumeyes python3-sphinx python3-dns
       - run: 'echo "version=${_REF#*-}" >> $GITHUB_OUTPUT'
         id: version
         shell: bash
