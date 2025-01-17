@@ -58,9 +58,9 @@ jobs:
           release_name: ${{ github.ref }}
           draft: true
 
-    #   - uses: actions/download-artifact@v4
-    #     with:
-    #       name: ndcli-src-${{ needs.build.outputs.version }}.tar.gz
+      - uses: actions/download-artifact@v4
+        with:
+          name: ndcli-src-${{ needs.build.outputs.version }}.tar.gz
 
     #   - uses: actions/upload-release-asset@v1
     #     env:
